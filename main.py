@@ -60,12 +60,12 @@ test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 #     test_acc = test(model, test_loader)
 #     pbar.set_postfix_str(f'Epoch: {epoch:03d}, Train Acc: {train_acc:.4f}, Test Acc: {test_acc:.4f}')
 
-# torch.save(model, "MUTAG_model.pth")
+# torch.save(model, "models/MUTAG_model.pth")
 
-model = torch.load("MUTAG_model.pth")
+model = torch.load("models/MUTAG_model.pth")
 
 init_graph = dataset[0]
-target_class = 1
+target_class = 0
 
 interpreter = GNNInterpreter(model.get_embedding_outputs, train_dataset)
 print(init_graph.y)
@@ -84,6 +84,7 @@ atom_indices = {
 labels = dict(zip(range(pg.Xi.shape[0]), map(atom_indices.get, torch.argmax(init_graph.x, dim=1).detach().numpy())))
 nx.draw_networkx(to_networkx(init_graph, to_undirected=True), with_labels=True, node_color = torch.argmax(init_graph.x, dim=1), labels=labels)
 plt.savefig(f"explanations/Original Graph.png")
+plt.cla()
 
 explanation_graphs = pg.sample_explanations(5)
 print("Example Outputs:\n", torch.softmax(interpreter.get_embedding_outputs(explanation_graphs)[1], dim=1).detach())

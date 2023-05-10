@@ -21,28 +21,22 @@ class GCN(torch.nn.Module):
         self.conv1 = GCNConv(in_channels, hidden_channels, out_channels)
         self.conv2 = GCNConv(hidden_channels, hidden_channels)
         self.conv3 = GCNConv(hidden_channels, hidden_channels)
-        self.lin = Linear(hidden_channels, out_channels)
-
+        self.lin1 = Linear(hidden_channels, hidden_channels)
+        self.lin2 = Linear(hidden_channels, out_channels)
+    
     def get_embedding_outputs(self, data):
         x, edge_index, edge_weight, batch = data.x, data.edge_index, data.edge_weight, data.batch
-        
-        # 1. Obtain node embeddings 
-        x = self.conv1(x, edge_index, edge_weight)
-        x = x.relu()
-        x = self.conv2(x, edge_index, edge_weight)
-        x = x.relu()
-        x = self.conv3(x, edge_index, edge_weight)
-
-        # 2. Readout layer
-        embedding = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
-
-        # 3. Apply a final classifier
-        x = F.dropout(embedding, p=0.5, training=self.training)
-        x = self.lin(x)
-        
-        return embedding, x
+        embedding = self.embed(x, edge_index, batch, edge_weight)
+        output =  self.classify(embedding)
+        return embedding, output
 
     def forward(self, x, edge_index, batch, edge_weight=None):
+        if edge_weight is None: edge_weight = torch.ones(edge_index.shape[1])
+        embedding = self.embed(x, edge_index, batch, edge_weight)
+        output =  self.classify(embedding)
+        return output
+
+    def embed(self, x, edge_index, batch, edge_weight=None):
         if edge_weight is None: edge_weight = torch.ones(edge_index.shape[1])
         
         # 1. Obtain node embeddings 
@@ -54,10 +48,13 @@ class GCN(torch.nn.Module):
 
         # 2. Readout layer
         x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
-
+        return x
+    
+    def classify(self, x):
         # 3. Apply a final classifier
         x = F.dropout(x, p=0.5, training=self.training)
-        x = self.lin(x)
+        x = self.lin1(x)
+        x = self.lin2(x)
         
         return x
     
