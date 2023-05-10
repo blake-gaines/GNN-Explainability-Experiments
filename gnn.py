@@ -1,49 +1,20 @@
-import os
-import torch
-
 import torch
 from torch_geometric.datasets import TUDataset
-
-dataset = TUDataset(root='data/TUDataset', name='MUTAG')
-
-print()
-print(f'Dataset: {dataset}:')
-print('====================')
-print(f'Number of graphs: {len(dataset)}')
-print(f'Number of features: {dataset.num_features}')
-print(f'Number of classes: {dataset.num_classes}')
-
-data = dataset[0]  # Get the first graph object.
-
-print()
-print(data)
-print('=============================================================')
-
-# Gather some statistics about the first graph.
-print(f'Number of nodes: {data.num_nodes}')
-print(f'Number of edges: {data.num_edges}')
-print(f'Average node degree: {data.num_edges / data.num_nodes:.2f}')
-print(f'Has isolated nodes: {data.has_isolated_nodes()}')
-print(f'Has self-loops: {data.has_self_loops()}')
-print(f'Is undirected: {data.is_undirected()}')
-
-torch.manual_seed(12345)
-dataset = dataset.shuffle()
-
-train_dataset = dataset[:150]
-test_dataset = dataset[150:]
-
-print(f'Number of training graphs: {len(train_dataset)}')
-print(f'Number of test graphs: {len(test_dataset)}')
-
-from torch_geometric.loader import DataLoader
-
-train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
+import torch
+import torch.nn.functional as F
+from torch_geometric.data import Data, Batch
+from torch_geometric.logging import init_wandb, log
+from torch_geometric.utils import to_dense_adj, dense_to_sparse
+from torch.autograd import Variable
+from tqdm import tqdm_notebook as tqdm
+from torchviz import make_dot
+from torch_geometric.utils import to_networkx
+import networkx as nx
 
 from torch.nn import Linear
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
+# from torch_geometric.nn.dense import DenseGCNConv
 from torch_geometric.nn import global_mean_pool
 
 
@@ -56,13 +27,34 @@ class GCN(torch.nn.Module):
         self.conv3 = GCNConv(hidden_channels, hidden_channels)
         self.lin = Linear(hidden_channels, dataset.num_classes)
 
-    def forward(self, x, edge_index, batch):
+    def get_embedding_outputs(self, data):
+        x, edge_index, edge_weight, batch = data.x, data.edge_index, data.edge_weight, data.batch
+        
         # 1. Obtain node embeddings 
-        x = self.conv1(x, edge_index)
+        x = self.conv1(x, edge_index, edge_weight)
         x = x.relu()
-        x = self.conv2(x, edge_index)
+        x = self.conv2(x, edge_index, edge_weight)
         x = x.relu()
-        x = self.conv3(x, edge_index)
+        x = self.conv3(x, edge_index, edge_weight)
+
+        # 2. Readout layer
+        embedding = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
+
+        # 3. Apply a final classifier
+        x = F.dropout(embedding, p=0.5, training=self.training)
+        x = self.lin(x)
+        
+        return embedding, x
+
+    def forward(self, x, edge_index, batch, edge_weight=None):
+        if edge_weight is None: edge_weight = torch.ones(edge_index.shape[1])
+        
+        # 1. Obtain node embeddings 
+        x = self.conv1(x, edge_index, edge_weight)
+        x = x.relu()
+        x = self.conv2(x, edge_index, edge_weight)
+        x = x.relu()
+        x = self.conv3(x, edge_index, edge_weight)
 
         # 2. Readout layer
         x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
@@ -72,15 +64,8 @@ class GCN(torch.nn.Module):
         x = self.lin(x)
         
         return x
-
-model = GCN(hidden_channels=64)
-print(model)
-
-model = GCN(hidden_channels=64)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-criterion = torch.nn.CrossEntropyLoss()
-
-def train():
+    
+def train(model, train_loader, optimizer, criterion):
     model.train()
 
     for data in train_loader:  # Iterate in batches over the training dataset.
@@ -90,7 +75,7 @@ def train():
          optimizer.step()  # Update parameters based on gradients.
          optimizer.zero_grad()  # Clear gradients.
 
-def test(loader):
+def test(model, loader):
      model.eval()
 
      correct = 0
@@ -99,10 +84,3 @@ def test(loader):
          pred = out.argmax(dim=1)  # Use the class with highest probability.
          correct += int((pred == data.y).sum())  # Check against ground-truth labels.
      return correct / len(loader.dataset)  # Derive ratio of correct predictions.
-
-
-for epoch in range(1, 171):
-    train()
-    train_acc = test(train_loader)
-    test_acc = test(test_loader)
-    print(f'Epoch: {epoch:03d}, Train Acc: {train_acc:.4f}, Test Acc: {test_acc:.4f}')
