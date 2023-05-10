@@ -1,15 +1,14 @@
 import torch
 from torch_geometric.datasets import TUDataset
-import torch
 import torch.nn.functional as F
 from torch_geometric.data import Data, Batch
-from torch_geometric.logging import init_wandb, log
-from torch_geometric.utils import to_dense_adj, dense_to_sparse
+from torch_geometric.utils import dense_to_sparse
 from torch.autograd import Variable
-from tqdm import tqdm_notebook as tqdm
+from tqdm import tqdm
 from torchviz import make_dot
 from torch_geometric.utils import to_networkx
 import networkx as nx
+from torch_geometric.loader import DataLoader
 
 class ProbGraph:
     def __init__(self, data):
@@ -105,7 +104,7 @@ class GNNInterpreter():
         self.average_phi = self.get_average_phi(train_dataset).detach()
 
     def get_average_phi(self, dataset):
-        dataloader = DataLoader(train_dataset, batch_size=1)
+        dataloader = DataLoader(dataset, batch_size=1)
         embedding_sum = None
         n_instances = torch.zeros(dataset.num_classes)
         for batch in dataloader:
