@@ -1,0 +1,18 @@
+name: gl
+channels:
+  - https://conda.anaconda.org/gurobi
+  - defaults
+dependencies:
+  - python
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pytorch-cuda
+  - pyg
+  - matplotlib
+  - plotly
+  - ipykernel
+  - networkx
+  - pygraphviz
+  - ipywidgets
+prefix: /home/blake/anaconda3/envs/gl
