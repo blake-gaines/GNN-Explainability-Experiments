@@ -1,0 +1,10 @@
+How to initialize generated graph?
+Regularization on all params or just Omega?
+Convergence Criteria?
+Unstable training loss?
+
+Ideas:
+Budget penalty penalizes deviation from original graph.
+Instead of just maximizing correct logit, also minimize incorrect logits, or maximize correct - incorrect logits.
+Get differences between explanation graphs with different targets from the same initialization, penalize edit distance.
+Using LP, get inputs corresponding to many output probabilities. Consider different logits corresponding to the same probabilities.
