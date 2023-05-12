@@ -71,7 +71,7 @@ if not load_model:
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     criterion = torch.nn.CrossEntropyLoss()
     print(model)
-    pbar = tqdm(range(1,100))
+    pbar = tqdm(range(1,1000))
     for epoch in pbar:
         train(model, train_loader, optimizer, criterion)
         train_acc = test(model, train_loader)
