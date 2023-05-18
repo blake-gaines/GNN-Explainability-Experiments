@@ -9,6 +9,11 @@ import networkx as nx
 from gnn import GCN, train, test
 from explain import GNNInterpreter
 import matplotlib.pyplot as plt
+import os
+
+if not os.path.isdir("data"): os.mkdir("data")
+if not os.path.isdir("explanations"): os.mkdir("explanations")
+if not os.path.isdir("models"): os.mkdir("models")
 
 load_model = False
 model_path = "models/MUTAG_model.pth"
