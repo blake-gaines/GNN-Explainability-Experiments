@@ -12,3 +12,5 @@ Create a conda environment with necessary requirements using the following comma
 - *gnn.py* contains the code for the GNN model described by the GNNInterpreter paper for use with the MUTAG dataset
 - *main.py* trains a GNN model on the MUTAG dataset and generates explanations for both classes
 - *unresolved.txt* contains a list of ambiguities in the original GNNInterpreter paper, as well as new directions for future work
+
+Images of explanitory graphs will be generated in the "explanations" directory.
