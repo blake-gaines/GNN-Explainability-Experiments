@@ -10,7 +10,7 @@ from gnn import GCN, train, test
 from explain import GNNInterpreter
 import matplotlib.pyplot as plt
 
-load_model = True
+load_model = False
 model_path = "models/MUTAG_model.pth"
 
 dataset = TUDataset(root='data/TUDataset', name='MUTAG')
