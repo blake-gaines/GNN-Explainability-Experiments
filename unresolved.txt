@@ -1,3 +1,4 @@
+Unclear pieces of GNNInterpreter:
 How to initialize generated graph?
 Regularization on all params or just Omega?
 Convergence Criteria?
