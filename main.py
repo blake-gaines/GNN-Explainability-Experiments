@@ -15,7 +15,7 @@ if not os.path.isdir("data"): os.mkdir("data")
 if not os.path.isdir("explanations"): os.mkdir("explanations")
 if not os.path.isdir("models"): os.mkdir("models")
 
-load_model = False
+load_model = True
 model_path = "models/MUTAG_model.pth"
 
 dataset = TUDataset(root='data/TUDataset', name='MUTAG')
@@ -76,7 +76,7 @@ if not load_model:
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     criterion = torch.nn.CrossEntropyLoss()
     print(model)
-    pbar = tqdm(range(1,1000))
+    pbar = tqdm(range(1,100))
     for epoch in pbar:
         train(model, train_loader, optimizer, criterion)
         train_acc = test(model, train_loader)
@@ -95,7 +95,7 @@ interpreter = GNNInterpreter(model.get_embedding_outputs, train_dataset)
 
 init_graph_index = 0
 for init_graph_index in range(3):
-    init_graph = dataset[init_graph_index]
+    init_graph = test_dataset[init_graph_index]
     print(f"Optmizing graph {init_graph_index}")
     print(f"Initial Graph Target: Class {int(init_graph.y)}")
     print()

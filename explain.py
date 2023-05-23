@@ -52,20 +52,18 @@ class GNNInterpreter:
 
         r["Budget Penalty"] = F.softplus(torch.sigmoid(r["Omega L1"])-self.B)**2 * self.reg_weights["Omega L1"][class_index] * min(self.iteration/500, 1)
 
-        # Theta = torch.sigmoid(pg.Omega).squeeze()
-        # connectivity_incentive = 0
-        # for i in range(pg.Omega.shape[0]):
-        #     for j in range(pg.Omega.shape[0]):
-        #         if i != j:
-        #             Pij = Theta[i][j]
-        #             for k in range(pg.Omega.shape[0]):
-        #                 if i != k:
-        #                     Pik = Theta[i][k]
-        #                     # connectivity_incentive += self.bernoulli_kl(Pij, Pik)
-        #                     connectivity_incentive += F.kl_div(Pij, Pik)
-        # r["Connectivity Incentive"] = connectivity_incentive * self.reg_weights["Connectivity Incentive"][class_index]
+        connectivity_incentive = 0
+        for i in range(pg.Omega.shape[0]):
+            for j in range(pg.Omega.shape[0]):
+                if i != j:
+                    Pij = pg.Omega[i][j]
+                    for k in range(pg.Omega.shape[0]):
+                        if i != k and j!=k:
+                            Pik = pg.Omega[i][k]
+                            connectivity_incentive += F.kl_div(Pij, Pik, log_target=True)
+        r["Connectivity Incentive"] = connectivity_incentive * self.reg_weights["Connectivity Incentive"][class_index]
         
-        return sum(r.values())
+        return r
 
     def train(self, init_graph, class_index, max_iter=1000):
         pg = ProbGraph(init_graph)
@@ -85,7 +83,8 @@ class GNNInterpreter:
 
             class_logits = outputs[:, class_index]
             embedding_similarities = F.cosine_similarity(embeddings, self.average_phi[class_index], dim=1)
-            regularization = self.regularizer(pg, class_index)
+            regularization_dict = self.regularizer(pg, class_index)
+            regularization = sum(regularization_dict.values())
             # mean_error = torch.mean(class_logits)
             mean_L = torch.mean(class_logits+self.mu*embedding_similarities)
             loss = mean_L - regularization
@@ -100,9 +99,11 @@ class GNNInterpreter:
             loss.backward()
             # torch.nn.utils.clip_grad_norm_(pg.parameters.values(), 100)
             optimizer.step()
+            if regularization_dict["Connectivity Incentive"] > 0.1: print("hi")
             
             # explanation_graph = pg.sample_explanations(3)
             # print("Example Output:\n", torch.softmax(self.get_embedding_outputs(explanation_graph)[1], dim=1))
             # print(self.get_embedding_outputs(explanation_graph)[1])
+        print(regularization_dict)
 
         return pg
