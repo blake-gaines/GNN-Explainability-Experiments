@@ -15,4 +15,5 @@ dependencies:
   - networkx
   - pygraphviz
   - ipywidgets
+  - wandb
 prefix: /home/blake/anaconda3/envs/gl
