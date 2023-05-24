@@ -15,7 +15,7 @@ from torch_geometric.nn import global_mean_pool
 
 
 class GCN(torch.nn.Module):
-    def __init__(self, in_channels, hidden_channels, out_channels):
+    def __init__(self, in_channels, out_channels):
         super(GCN, self).__init__()
         torch.manual_seed(12345)
         self.conv1 = GCNConv(in_channels, hidden_channels, out_channels)
@@ -52,10 +52,10 @@ class GCN(torch.nn.Module):
     
     def classify(self, x):
         # 3. Apply a final classifier
-        x = F.dropout(x, p=0.5, training=self.training)
+        # x = F.dropout(x, p=0.5, training=self.training)
         x = self.lin1(x)
         x = self.lin2(x)
-        
+        x = self.lin3(x)
         return x
     
 def train(model, train_loader, optimizer, criterion):
