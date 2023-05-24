@@ -17,8 +17,8 @@ if not os.path.isdir("data"): os.mkdir("data")
 if not os.path.isdir("explanations"): os.mkdir("explanations")
 if not os.path.isdir("models"): os.mkdir("models")
 
-epochs = 100
-num_inits = 4
+epochs = 1000
+num_inits = 2
 num_explanations = 3
 
 load_model = True
@@ -78,11 +78,11 @@ print(f'Number of training graphs: {len(train_dataset)}')
 print(f'Number of test graphs: {len(test_dataset)}')
 print()
 
-train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
 
 if not load_model:
-    model = GCN(in_channels=dataset.num_node_features, hidden_channels=64, out_channels=dataset.num_classes)
+    model = GCN(in_channels=dataset.num_node_features, out_channels=dataset.num_classes)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     criterion = torch.nn.CrossEntropyLoss()
     print(model)
