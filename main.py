@@ -133,7 +133,7 @@ for init_graph_index in range(num_inits):
     plt.savefig(f"explanations/Graph {init_graph_index} Original - Target {int(init_graph.y)}.png")
     if log_run:
         init_graph_image = wandb.Image(fig)
-    plt.cla()
+    plt.close()
 
     for target_class in [0,1]:
         print(f"Optimizing for class {target_class}")
@@ -160,7 +160,7 @@ for init_graph_index in range(num_inits):
                 # plt.savefig(img_buf, format='png')
                 # eg_images.append(wandb.Image(img_buf, caption=f"Graph {init_graph_index} Target {target_class} (#{i+1}).png"))
                 eg_images.append(wandb.Image(fig))
-            plt.cla()
+            plt.close()
 
         if log_run:
             explanation_table.add_data(
