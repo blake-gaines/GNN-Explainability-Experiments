@@ -123,7 +123,7 @@ for init_graph_index in range(num_inits):
     for target_class in [0,1]:
         print(f"Optimizing for class {target_class}")
 
-        pg = interpreter.train(dataset[0], target_class, max_iter=100)
+        pg = interpreter.train(dataset[init_graph_index], target_class, max_iter=1000)
 
         explanation_graphs = pg.sample_explanations(num_explanations)
         example_outputs = interpreter.get_embedding_outputs(explanation_graphs)[1]
