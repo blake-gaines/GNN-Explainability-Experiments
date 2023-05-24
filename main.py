@@ -68,21 +68,6 @@ print(f'Number of graphs: {len(dataset)}')
 print(f'Number of features: {dataset.num_features}')
 print(f'Number of classes: {dataset.num_classes}')
 
-data = dataset[0]  # Get the first graph object.
-
-print()
-print(data)
-print('=============================================================')
-
-# Gather some statistics about the first graph.
-print(f'Number of nodes: {data.num_nodes}')
-print(f'Number of edges: {data.num_edges}')
-print(f'Average node degree: {data.num_edges / data.num_nodes:.2f}')
-print(f'Has isolated nodes: {data.has_isolated_nodes()}')
-print(f'Has self-loops: {data.has_self_loops()}')
-print(f'Is undirected: {data.is_undirected()}')
-
-print('\n=============================================================\n')
 
 torch.manual_seed(12345)
 dataset = dataset.shuffle()
@@ -129,7 +114,7 @@ for init_graph_index in range(num_inits):
     fig, ax = plt.subplots()
     G = to_networkx(init_graph, to_undirected=True)
     pos = nx.spring_layout(G, seed=7)
-    nx.draw_networkx(G, pos=pos, with_labels=True, node_color = torch.argmax(init_graph.x, dim=1), labels=labels)
+    nx.draw_networkx(G, pos=pos, with_labels=True, node_color=torch.argmax(init_graph.x, dim=1), labels=labels)
     plt.savefig(f"explanations/Graph {init_graph_index} Original - Target {int(init_graph.y)}.png")
     if log_run:
         init_graph_image = wandb.Image(fig)

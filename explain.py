@@ -94,12 +94,11 @@ class GNNInterpreter:
             #     all_params.update(model.named_parameters())
             #     self.computation_graph = make_dot(loss, all_params)#, show_attrs=True, show_saved=True)
 
-            self.pbar.set_postfix_str(f"Loss: {float(loss):.2f}    ({mean_L:.2f} Error, {regularization:.2f} Regularization)")
+            self.pbar.set_postfix_str(f"Loss: {float(loss):.2f}    ({mean_L:.2f} Objective, {regularization:.2f} Regularization)")
 
             loss.backward()
             # torch.nn.utils.clip_grad_norm_(pg.parameters.values(), 100)
             optimizer.step()
-            if regularization_dict["Connectivity Incentive"] > 0.1: print("hi")
             
             # explanation_graph = pg.sample_explanations(3)
             # print("Example Output:\n", torch.softmax(self.get_embedding_outputs(explanation_graph)[1], dim=1))
