@@ -5,19 +5,41 @@ from torch_geometric.utils import to_dense_adj, dense_to_sparse
 from torch.autograd import Variable
 
 class ProbGraph:
-    def __init__(self, init_graph):
+    def __init__(self, init_graph=None, init_method="normal", num_nodes=10, node_feature_dim=8, edge_feature_dim=4):
+        if init_graph is not None:
+            num_nodes = init_graph.num_nodes
+            num_edges = init_graph.num_edges 
+            node_feature_dim = init_graph.num_node_features
+            edge_feature_dim = init_graph.num_edge_features
+
+        ## TODO: FIX THIS
         self.has_edge_attributes = init_graph.edge_attr is not None 
         self.has_node_attributes = init_graph.x is not None
-        self.Omega = Variable(torch.Tensor(to_dense_adj(init_graph.edge_index)), requires_grad=True)
-        # self.Omega = Variable(torch.Tensor(0*torch.ones((init_graph.x.shape[0], init_graph.x.shape[0]))), requires_grad=True)
+
+        if init_method == "normal":
+            self.Omega = Variable(torch.normal(torch.zeros((num_nodes, num_nodes)), torch.ones((num_nodes, num_nodes))), requires_grad=True)
+        elif init_method == "copy":
+            self.Omega = Variable(torch.Tensor(to_dense_adj(init_graph.edge_index)), requires_grad=True)
+        elif init_method == "zero":
+            self.Omega = Variable(torch.Tensor(0*torch.ones((init_graph.x.shape[0], init_graph.x.shape[0]))), requires_grad=True)
+        else:
+            raise NotImplementedError("Unknown Init Method")
         self.parameters = {"Omega": self.Omega}
         if self.has_edge_attributes: 
-            self.H = Variable(torch.Tensor(init_graph.edge_attr), requires_grad=True)
-            # self.H = Variable(torch.Tensor(0*torch.ones(init_graph.edge_attr.shape)), requires_grad=True)
+            if init_method == "normal":
+                self.H = Variable(torch.normal(torch.zeros((num_edges, edge_feature_dim)), torch.ones((num_edges, edge_feature_dim))), requires_grad=True)
+            elif init_method == "copy":
+                self.H = Variable(torch.Tensor(init_graph.edge_attr), requires_grad=True)
+            elif init_method == "zero":
+                self.H = Variable(torch.zeros((num_edges, edge_feature_dim)), requires_grad=True)
             self.parameters["H"] = self.H
         if self.has_node_attributes: 
-            self.Xi = Variable(torch.Tensor(init_graph.x), requires_grad=True)
-            # self.Xi = Variable(torch.Tensor(0*torch.ones(init_graph.x.shape)), requires_grad=True)
+            if init_method == "normal":
+                self.Xi = Variable(torch.normal(torch.zeros((num_nodes, node_feature_dim)), torch.ones((num_nodes, node_feature_dim))), requires_grad=True)
+            elif init_method == "copy":
+                self.Xi = Variable(torch.Tensor(init_graph.x), requires_grad=True)
+            elif init_method == "zero":
+                self.Xi = Variable(torch.zeros((num_nodes, node_feature_dim)), requires_grad=True)
             self.parameters["Xi"] = self.Xi
 
     def sample_train(self, K, tau_a, tau_z, tau_x):
