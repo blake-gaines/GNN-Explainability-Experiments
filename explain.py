@@ -45,10 +45,9 @@ class GNNInterpreter:
     def regularizer(self, pg, class_index):
         r = dict()
 
-        # r["Omega L1"] = torch.norm(pg.Omega, 1) * self.reg_weights["Omega L1"][class_index]
-        # r["Omega L2"] = torch.norm(pg.Omega, 2) * self.reg_weights["Omega L2"][class_index]
-        r["Omega L1"] = sum(torch.norm(parameter, 1) for parameter in pg.parameters.values()) * self.reg_weights["Omega L1"][class_index]
-        r["Omega L2"] = sum(torch.norm(parameter, 2) for parameter in pg.parameters.values()) * self.reg_weights["Omega L2"][class_index]
+        for name, parameter in pg.parameters.items():
+            r[f"{name} L1"] = torch.norm(parameter, 1) * self.reg_weights["Omega L1"][class_index]
+            r[f"{name} L2"] = torch.norm(parameter, 2) * self.reg_weights["Omega L2"][class_index]
 
         r["Budget Penalty"] = F.softplus(torch.sigmoid(r["Omega L1"])-self.B)**2 * self.reg_weights["Omega L1"][class_index] * min(self.iteration/500, 1)
 
