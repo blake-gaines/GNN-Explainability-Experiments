@@ -18,11 +18,12 @@ class GCN(torch.nn.Module):
     def __init__(self, in_channels, out_channels):
         super(GCN, self).__init__()
         torch.manual_seed(12345)
-        self.conv1 = GCNConv(in_channels, hidden_channels, out_channels)
-        self.conv2 = GCNConv(hidden_channels, hidden_channels)
-        self.conv3 = GCNConv(hidden_channels, hidden_channels)
-        self.lin1 = Linear(hidden_channels, hidden_channels)
-        self.lin2 = Linear(hidden_channels, out_channels)
+        self.conv1 = GCNConv(in_channels, 32)
+        self.conv2 = GCNConv(32, 48)
+        self.conv3 = GCNConv(48, 64)
+        self.lin1 = Linear(64, 32)
+        self.lin2 = Linear(32, 32)
+        self.lin3 = Linear(32, out_channels)
     
     def get_embedding_outputs(self, data):
         x, edge_index, edge_weight, batch = data.x, data.edge_index, data.edge_weight, data.batch
