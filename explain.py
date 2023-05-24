@@ -51,16 +51,16 @@ class GNNInterpreter:
 
         r["Budget Penalty"] = F.softplus(torch.sigmoid(r["Omega L1"])-self.B)**2 * self.reg_weights["Omega L1"][class_index] * min(self.iteration/500, 1)
 
-        connectivity_incentive = 0
-        for i in range(pg.Omega.shape[0]):
-            for j in range(pg.Omega.shape[0]):
-                if i != j:
-                    Pij = pg.Omega[i][j]
-                    for k in range(pg.Omega.shape[0]):
-                        if i != k and j!=k:
-                            Pik = pg.Omega[i][k]
-                            connectivity_incentive += F.kl_div(Pij, Pik, log_target=True)
-        r["Connectivity Incentive"] = connectivity_incentive * self.reg_weights["Connectivity Incentive"][class_index]
+        # connectivity_incentive = 0
+        # for i in range(pg.Omega.shape[0]):
+        #     for j in range(pg.Omega.shape[0]):
+        #         if i != j:
+        #             Pij = pg.Omega[i][j]
+        #             for k in range(pg.Omega.shape[0]):
+        #                 if i != k and j!=k:
+        #                     Pik = pg.Omega[i][k]
+        #                     connectivity_incentive += F.kl_div(Pij, Pik, log_target=True)
+        # r["Connectivity Incentive"] = connectivity_incentive * self.reg_weights["Connectivity Incentive"][class_index]
         
         return r
 
