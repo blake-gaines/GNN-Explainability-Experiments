@@ -10,21 +10,21 @@ from gnn import GCN, train, test
 from explain import GNNInterpreter
 import matplotlib.pyplot as plt
 import os
-import io
-from PIL import Image
+# from torch_geometric.datasets import ExplainerDataset
+# from torch_geometric.datasets.graph_generator import BAGraph
 
 if not os.path.isdir("data"): os.mkdir("data")
 if not os.path.isdir("explanations"): os.mkdir("explanations")
 if not os.path.isdir("models"): os.mkdir("models")
 
 epochs = 1000
-num_inits = 2
+num_inits = 5
 num_explanations = 3
 
 load_model = True
 model_path = "models/MUTAG_model.pth"
 
-log_run = True
+log_run = False
 
 
 if log_run: 
@@ -42,6 +42,12 @@ if log_run:
     })
 
     explanation_table = wandb.Table(columns=["Original Graph Index", "Init Graph", "Target Class", "Explanations", "Logits"])
+
+# dataset = ExplainerDataset(
+#     graph_generator=BAGraph(num_nodes=300, num_edges=5),
+#     motif_generator='house',
+#     num_motifs=80,
+# )
 
 dataset = TUDataset(root='data/TUDataset', name='MUTAG')
 atom_indices = {
@@ -123,7 +129,7 @@ for init_graph_index in range(num_inits):
     for target_class in [0,1]:
         print(f"Optimizing for class {target_class}")
 
-        pg = interpreter.train(dataset[init_graph_index], target_class, max_iter=1000)
+        pg = interpreter.train(dataset[init_graph_index], target_class, max_iter=5000)
 
         explanation_graphs = pg.sample_explanations(num_explanations)
         example_outputs = interpreter.get_embedding_outputs(explanation_graphs)[1]
