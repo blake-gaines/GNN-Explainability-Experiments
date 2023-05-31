@@ -5,8 +5,7 @@ Convergence Criteria?
 Unstable training loss?
 
 Ideas:
-Budget penalty penalizes deviation from original graph.
-Instead of just maximizing correct logit, also minimize incorrect logits, or maximize correct - incorrect logits.
-Get differences between explanation graphs with different targets from the same initialization, penalize edit distance.
-Using LP, get inputs corresponding to many output probabilities. Consider different logits corresponding to the same probabilities.
-Using LP, constrain high output for target class and minimize edit distance.
+    Budget penalty penalizes deviation from original graph. Try only visualizing deviations.
+    Instead of just maximizing correct logit, also minimize incorrect logits, or maximize correct - incorrect logits. Maybe also consider the distribution of logits for the training set.
+ *  Using LP, constrain high output for target class and minimize edit distance.
+    Slider to visualize interpolation between original and modified graph.
