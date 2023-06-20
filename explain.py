@@ -20,10 +20,11 @@ class GNNInterpreter:
         self.B = 20 # Max Budget
 
         self.reg_weights = {
-            "Omega L1": [10, 5],
-            "Omega L2": [5, 2],
+            "RL1": [10, 5],
+            "RL2": [5, 2],
             "Budget Penalty": [20, 10],
             "Connectivity Incentive": [1,2],
+            "Deviation": [0.001,0.001],
         }
 
         self.get_embedding_outputs = get_embedding_outputs
@@ -46,10 +47,18 @@ class GNNInterpreter:
         r = dict()
 
         for name, parameter in pg.parameters.items():
-            r[f"{name} L1"] = torch.norm(parameter, 1) * self.reg_weights["Omega L1"][class_index]
-            r[f"{name} L2"] = torch.norm(parameter, 2) * self.reg_weights["Omega L2"][class_index]
+            r[f"{name} L1"] = torch.norm(parameter, 1) * self.reg_weights["RL1"][class_index]
+            r[f"{name} L2"] = torch.norm(parameter, 2) * self.reg_weights["RL2"][class_index]
 
-        r["Budget Penalty"] = F.softplus(torch.sigmoid(r["Omega L1"])-self.B)**2 * self.reg_weights["Omega L1"][class_index] * min(self.iteration/500, 1)
+        r["Budget Penalty"] = F.softplus(torch.norm(torch.sigmoid(pg.Omega), 1)-self.B)**2 * self.reg_weights["Budget Penalty"][class_index] * min(self.iteration/500, 1)
+
+        # if pg.init_graph is not None:
+        #     r["Deviation"] = torch.norm(pg.init_adj_matrix-torch.sigmoid(pg.Omega), 1) ** 2
+        #     if pg.has_node_attributes:
+        #         r["Deviation"] += torch.norm(pg.init_graph.x-torch.sigmoid(pg.Xi), 1) ** 2
+        #     if pg.has_edge_attributes:
+        #         r["Deviation"] += torch.norm(pg.init_graph.edge_attr-torch.sigmoid(pg.H), 1) ** 2
+        # r["Deviation"] *= self.reg_weights["Deviation"][class_index]
 
         # connectivity_incentive = 0
         # for i in range(pg.Omega.shape[0]):
@@ -64,11 +73,11 @@ class GNNInterpreter:
         
         return r
 
-    def train(self, init_graph, class_index, max_iter=1000):
+    def train(self, init_graph, class_index, max_iter=5000):
         pg = ProbGraph(init_graph)
         self.pg = pg
 
-        optimizer = torch.optim.SGD(pg.parameters.values(), lr=1, maximize=True) # , momentum=0.9
+        optimizer = torch.optim.SGD(pg.parameters.values(), lr=0.1, maximize=True) # , momentum=0.9
 
         self.pbar = tqdm(range(max_iter))
 
@@ -76,7 +85,6 @@ class GNNInterpreter:
             optimizer.zero_grad()
 
             sampled_graphs = pg.sample_train(self.K, self.tau_a, self.tau_z, self.tau_x)
-            # print(sampled_graphs.get_example(0).requires_grad_())
 
             embeddings, outputs = self.get_embedding_outputs(sampled_graphs)
 
@@ -84,9 +92,10 @@ class GNNInterpreter:
             embedding_similarities = F.cosine_similarity(embeddings, self.average_phi[class_index], dim=1)
             regularization_dict = self.regularizer(pg, class_index)
             regularization = sum(regularization_dict.values())
-            # mean_error = torch.mean(class_logits)
             mean_L = torch.mean(class_logits+self.mu*embedding_similarities)
             loss = mean_L - regularization
+            # loss = -regularization
+            # loss = -regularization_dict["Deviation"]
 
             # if self.iteration == 0:
             #     all_params = pg.parameters
@@ -96,7 +105,6 @@ class GNNInterpreter:
             self.pbar.set_postfix_str(f"Loss: {float(loss):.2f}    ({mean_L:.2f} Objective, {regularization:.2f} Regularization)")
 
             loss.backward()
-            # torch.nn.utils.clip_grad_norm_(pg.parameters.values(), 100)
             optimizer.step()
             
             # explanation_graph = pg.sample_explanations(3)
